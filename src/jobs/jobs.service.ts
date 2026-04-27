@@ -42,16 +42,31 @@ export class JobsService {
       limit = 10,
     } = query;
 
+    if(!search && !jobType && !experienceLevel && !location && !skills && !salaryMin && !salaryMax) {
+      const [data, total] = await this.jobRepository.findAndCount({
+        where: { status: JobStatus.ACTIVE },
+        relations: ['recruiter'],
+        order: { createdAt: 'DESC' },
+        skip: (page - 1) * limit,
+        take: limit,
+      });
+      return {
+        data,
+        meta: {
+          total,
+          page,
+          limit,
+          totalPages: Math.ceil(total / limit),
+          hasNextPage: page < Math.ceil(total / limit),
+          hasPrevPage: page > 1,
+        },
+      };
+    }
     const qb = this.jobRepository
       .createQueryBuilder('job')
-      .leftJoinAndSelect('job.recruiter', 'recruiter')
-      .where('job.status = :status', { status: JobStatus.ACTIVE })
-      .select([
-        'job',
-        'recruiter.id',
-        'recruiter.fullName',
-        'recruiter.email',
-      ]);
+      .leftJoin('job.recruiter', 'recruiter')
+      .addSelect(['recruiter.id', 'recruiter.fullName', 'recruiter.email'])
+      .where('job.status = :status', { status: JobStatus.ACTIVE });
 
     if (search) {
       qb.andWhere(
@@ -89,7 +104,7 @@ export class JobsService {
       qb.andWhere('job.salary_max <= :salaryMax', { salaryMax });
     }
 
-    qb.orderBy('job.created_at', 'DESC');
+    qb.orderBy('job.createdAt', 'DESC');
 
     const skip = (page - 1) * limit;
     qb.skip(skip).take(limit);
@@ -124,17 +139,12 @@ export class JobsService {
 
   async findMyJobs(recruiterId: number, query: QueryJobDto) {
     const { page = 1, limit = 10 } = query;
-
-    const qb = this.jobRepository
-      .createQueryBuilder('job')
-      .where('job.recruiter_id = :recruiterId', { recruiterId })
-      .orderBy('job.created_at', 'DESC');
-
-    const skip = (page - 1) * limit;
-    qb.skip(skip).take(limit);
-
-    const [data, total] = await qb.getManyAndCount();
-
+    const [data, total] = await this.jobRepository.findAndCount({
+      where: { recruiterId },
+      order: { createdAt: 'DESC' },
+      skip: (page - 1) * limit,
+      take: limit,
+    });
     return {
       data,
       meta: {

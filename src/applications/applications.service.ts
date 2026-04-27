@@ -74,9 +74,9 @@ export class ApplicationsService {
 
     const qb = this.applicationRepository
       .createQueryBuilder('application')
-      .leftJoinAndSelect('application.job', 'job')
-      .leftJoinAndSelect('job.recruiter', 'recruiter')
-      .where('application.candidate_id = :candidateId', { candidateId })
+      .leftJoin('application.job', 'job')
+      .leftJoin('job.recruiter', 'recruiter')
+      .where('application.candidateId = :candidateId', { candidateId })
       .select([
         'application',
         'job.id',
@@ -95,7 +95,7 @@ export class ApplicationsService {
       qb.andWhere('application.status = :status', { status });
     }
 
-    qb.orderBy('application.applied_at', 'DESC');
+    qb.orderBy('application.appliedAt', 'DESC');
 
     const skip = (page - 1) * limit;
     qb.skip(skip).take(limit);
@@ -131,8 +131,8 @@ export class ApplicationsService {
 
     const qb = this.applicationRepository
       .createQueryBuilder('application')
-      .leftJoinAndSelect('application.candidate', 'candidate')
-      .where('application.job_id = :jobId', { jobId })
+      .leftJoin('application.candidate', 'candidate')
+      .where('application.jobId = :jobId', { jobId })
       .select([
         'application',
         'candidate.id',
@@ -147,7 +147,7 @@ export class ApplicationsService {
       qb.andWhere('application.status = :status', { status });
     }
 
-    qb.orderBy('application.applied_at', 'DESC');
+    qb.orderBy('application.appliedAt', 'DESC');
 
     const skip = (page - 1) * limit;
     qb.skip(skip).take(limit);
@@ -158,7 +158,7 @@ export class ApplicationsService {
       .createQueryBuilder('application')
       .select('application.status', 'status')
       .addSelect('COUNT(application.id)', 'count')
-      .where('application.job_id = :jobId', { jobId })
+      .where('application.jobId = :jobId', { jobId })
       .groupBy('application.status')
       .getRawMany();
 

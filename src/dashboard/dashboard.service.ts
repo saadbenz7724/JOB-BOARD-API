@@ -254,8 +254,8 @@ export class DashboardService {
     return this.applicationRepository
       .createQueryBuilder('application')
       .leftJoinAndSelect('application.job', 'job')
-      .where('application.candidate_id = :candidateId', { candidateId })
-      .orderBy('application.applied_at', 'DESC')
+      .where('application.candidateId = :candidateId', { candidateId })
+      .orderBy('application.appliedAt', 'DESC')
       .take(5)
       .select([
         'application.id',
